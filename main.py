@@ -5,9 +5,8 @@ import urllib.parse
 import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import google.generativeai as genai
+from google import genai
 
-# लक्ज़री कैटेगरी ताकि हर दिन अलग-अलग चीज़ों पर पोस्ट बने
 CATEGORIES = [
     "Ultra-Luxury Hypercar or Supercar",
     "Haute Horlogerie / Rare Luxury Watch",
@@ -19,11 +18,8 @@ CATEGORIES = [
 ]
 
 def generate_luxury_article():
-    api_key = os.environ.get("AI_API_KEY")
-    genai.configure(api_key=api_key)
-    
-    # gemini-1.5-flash या gemini-1.5-pro
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("AI_API_KEY")
+    client = genai.Client(api_key=api_key)
     
     selected_category = random.choice(CATEGORIES)
     
@@ -45,39 +41,43 @@ def generate_luxury_article():
     [Put raw HTML content here starting directly with <h2> or <p>. Do not include <html> or <body> tags. Do not use Markdown code blocks like ```html]
     """
     
-    response = model.generate_content(prompt)
+    # gemini-2.5-flash गूगल का सबसे नया, तेज़ और स्टेबल मॉडल है
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
+    except Exception:
+        # अगर किसी वजह से 2.5 उपलब्ध न हो, तो fallback
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=prompt,
+        )
+        
     return response.text
 
 def parse_and_build_html(raw_text):
-    # Markdown backticks हटाना अगर AI जोड़ दे
     clean_text = raw_text.replace("```html", "").replace("```", "").strip()
     
-    # Title निकालना
     title_match = re.search(r"TITLE:\s*(.+)", clean_text)
     title = title_match.group(1).strip() if title_match else "Exclusive Luxury Lifestyle Guide"
     
-    # Image Prompt निकालना
     img_match = re.search(r"IMAGE_PROMPT:\s*(.+)", clean_text)
     img_prompt = img_match.group(1).strip() if img_match else "Luxury exotic product 8k realistic"
     
-    # Content निकालना
     content_parts = clean_text.split("CONTENT:")
     body_content = content_parts[1].strip() if len(content_parts) > 1 else clean_text
     
-    # Pollinations AI से फ्री ऑटोमैटिक HD फोटो URL बनाना
     encoded_prompt = urllib.parse.quote(f"{img_prompt}, 8k resolution, cinematic lighting, photorealistic, luxury aesthetic")
     hd_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1200&height=750&nologo=true"
 
-    # Mobile-Friendly Responsive HTML डिज़ाइन तैयार करना
     final_html = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #222; max-width: 100%;">
-        <!-- Featured HD Image (Mobile Optimized) -->
         <div style="text-align: center; margin-bottom: 25px;">
             <img src="{hd_image_url}" alt="{title}" style="width: 100%; max-width: 850px; height: auto; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); display: block; margin: 0 auto;" />
             <p style="font-size: 12px; color: #777; margin-top: 6px;">Exclusive High-Definition Visual Showcase</p>
         </div>
 
-        <!-- Article Content -->
         <div style="font-size: 16px;">
             {body_content}
         </div>
