@@ -75,3 +75,4 @@ if __name__ == "__main__":
     print(f"Selected Topic: {topic}")
     article = generate_article(topic)
     send_email_to_blogger(article)
+    
