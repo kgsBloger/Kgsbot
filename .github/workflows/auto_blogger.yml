@@ -1,15 +1,15 @@
-name: Daily Auto Luxury Blogger
+name: Auto Post to Blogger via Email
 
 on:
   schedule:
-    - cron: '0 6 * * *' # हर दिन सुबह 6:00 UTC (भारतीय समयानुसार 11:30 AM) पर चलेगा
-  workflow_dispatch: # मैन्युअल रूप से चलाने का बटन
+    - cron: '0 8 * * *' # हर दिन भारतीय समयानुसार दोपहर 1:30 बजे (8:00 AM UTC) ऑटोमैटिक चलेगा
+  workflow_dispatch: # इससे आप GitHub Actions में खुद जाकर बटन दबाकर तुरंत टेस्ट भी कर सकते हैं
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -17,17 +17,15 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
-          pip install requests google-api-python-client google-auth-oauthlib google-auth
+          pip install google-generativeai
 
-      - name: Run Script
+      - name: Run Script to Publish Post
         env:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          BLOG_ID: ${{ secrets.BLOG_ID }}
-          BLOGGER_CLIENT_ID: ${{ secrets.BLOGGER_CLIENT_ID }}
-          BLOGGER_CLIENT_SECRET: ${{ secrets.BLOGGER_CLIENT_SECRET }}
-          BLOGGER_REFRESH_TOKEN: ${{ secrets.BLOGGER_REFRESH_TOKEN }}
+          BLOGGER_EMAIL: ${{ secrets.BLOGGER_EMAIL }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
         run: |
           python main.py
-          
